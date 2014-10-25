@@ -1,0 +1,246 @@
+<html>
+<head>
+</head>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+<style type="text/css">
+	#container {
+		width: 100px;
+		height: 100px;
+		margin-left: auto;
+		margin-right: auto;
+		border: 2px solid #000;
+		overflow: hidden;
+	}
+	.square {
+		width: 20px;
+		height: 20px;
+		float: left;
+	}
+	.square:nth-child(odd) {
+		/*background: #f2f2f2;*/
+	}
+	.square.active {
+		background: #000;
+	}
+	.square.fruit {
+		background: red;
+	}
+	.square.cola {
+		background: #000;
+	}
+	#score {
+		width: 200px;
+		margin-left: auto;
+		margin-right: auto;
+		font-size: 46px;
+		padding: 15px;
+		font-family: Helvetica;
+		background: beige;
+		margin-top: 15px;
+	}
+</style>
+<script type="text/javascript">
+
+$(document).ready(function() {   
+	numItems = 20;
+	numItemsRand = numItems;
+	$('#container').width(numItems*20).height(numItems*20);
+	--numItems;
+	counter = 0;
+	totalItems = numItemsRand*numItemsRand;
+	squares = new Array(numItems);
+	for (var i = 0; i <= numItems; i++) {
+		squares[i] = new Array(numItems);
+		for (var e = 0; e <= numItems; e++) {
+			squares[i][e] = false;
+			/*
+			add blocks to html
+			*/
+			selector = i+'-'+e;
+			$('#container').append('<div id="'+selector+'" class="square"></div>')
+		};
+	};
+	function searchActive() {
+		for (var i = squares.length - 1; i >= 0; i--) {
+			for (var e = squares[i].length - 1; e >= 0; e--) {
+				if(squares[i][e] == true) {
+					selector = '#'+i+'-'+e;
+						$(selector).addClass('active');
+				}
+				if(squares[i][e] == false) {
+					selector = '#'+i+'-'+e;
+						$(selector).removeClass('active');
+				} 
+			};
+		};
+	}
+	historicArray = new Array();
+	function historic() {
+		position = getCurrentPosition();
+		historicArray.push({'y':position.y,'x':position.x,});
+	}
+	function cleanHistory() {
+		while(counterCola < historicArray.length) {
+			historicArray.shift();
+		}
+	}
+	function printCola() {
+		//remove cola
+		$('.square').removeClass('cola');
+		$.each(historicArray, function( index, value ) {
+  			var selector = '#'+value.y+'-'+value.x; 
+  			$(selector).addClass('cola');
+
+		});
+	}
+	function checkColisionCola(yy,xx) {
+		var tm = new Array();
+		$.each(historicArray, function( index, value ) {
+			tm.push({'y':value.y,'x':value.x});
+		});
+		tm.pop();
+		$.each(tm, function(index, value) {
+			if(value.y == yy && value.x ==xx) {
+				gameOver();
+			}
+		});
+	}
+	function getCurrentPosition() {
+		for (var i = squares.length - 1; i >= 0; i--) {
+			for (var e = squares[i].length - 1; e >= 0; e--) {
+				if(squares[i][e] == true) {
+					return {'y':i,'x':e};
+				}
+			};
+		};
+	}
+	// Random
+	function randomN() {
+		return Math.floor((Math.random() * numItemsRand));
+	}
+	// Direction
+	$(document).keydown(function(e) {
+  		if(e.keyCode == 37) { // left
+  			if(direction == 'right') {
+
+  			} else {
+  				direction = 'left';	
+  			}
+    	} else if(e.keyCode == 39) { // right
+    		if(direction == 'left') {
+
+  			} else {
+    			direction = 'right';
+    		}
+    	} else if (e.keyCode == 40) { // down
+    		if (direction == 'up') { 
+    		} else {
+    			direction = 'down';	
+    		}
+    	} else if (e.keyCode == 38) { //Key up
+    		if (direction == 'down') {
+
+    		} else {
+    			direction = 'up';
+    		};
+    	}
+	}); // End keydown function;
+	//Game Over.
+ 	function gameOver() {
+		clearInterval(intervalActive);
+		$('#score').text(score+' Game Over');
+		gameover = true;
+	}
+	/* Fruit */
+	function randomFruit() {
+		fruit = {'x':0,'y':0};
+		fruit.x = randomN();
+		fruit.y = randomN();
+		return fruit;
+	}
+	function generateRandFruit() {
+		var fruit = randomFruit();
+		$.each(historicArray, function(index, value) {
+				if(value.y == fruit.y && value.x == fruit.x) {
+					exists = true;
+				} else {
+					exists = false;
+				}
+		});
+		if(exists == false) {
+			var selector = '#'+fruit.y+'-'+fruit.x;
+			$(selector).addClass('fruit');	
+		}
+	}
+	/* interval */
+	intervalActive = setInterval(function() {
+		position = getCurrentPosition();
+		if(fruit.x == position.x && fruit.y == position.y) {
+			console.log('Hit@!');
+			counterCola++;
+			$('.square').removeClass('fruit');
+			score += 100;
+			$('#score').text(score);
+			generateRandFruit();
+		}
+		historic();
+		cleanHistory();
+		printCola();
+		checkColisionCola(position.y,position.x);
+		squares[position.y][position.x] = false;
+		switch(direction) {
+    		case 'left':
+    			if(position.x == 0) {
+    				gameOver();
+    			}
+    			position.x--;
+        	break;
+    		case 'right':
+    			var comparepos = position.x + 1;
+    			if(comparepos > numItems) {
+    				gameOver();
+    			}
+    				position.x++;
+        	break;
+        	case 'down':
+        		var comparepos = position.y + 1;
+    			if(comparepos > numItems) {
+    				gameOver();
+    			}
+        		position.y++;
+        	break;
+        	case 'up':
+        		if(position.y == 0) {
+    				gameOver();
+    			}
+    			position.y--;
+           	break;
+    		default:
+        	break;
+		}
+		if(gameover) {
+			return false;
+		} else {
+			squares[position.y][position.x] = true;
+			searchActive();		
+		}
+
+	},80);
+	/* initializer */
+	gameover = false;
+	squares[0][0] = true;
+	searchActive();
+	direction = 'right';
+	score = 0;
+	counterCola = 1;
+	exists = false;
+	generateRandFruit();
+});//document ready
+</script>
+<body>
+	<div id="container">
+	</div>
+	<div id="score">
+	</div>
+</body>
+</html>
