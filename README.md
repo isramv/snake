@@ -1,4 +1,4 @@
-snake
+snake jQuery HTML and CSS (Inpired by the nokia game).
 =====
 Game created just for fun with jQuery and html and css.
 
